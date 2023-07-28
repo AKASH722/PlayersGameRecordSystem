@@ -149,7 +149,17 @@ public class PlayerRegistrationForm extends Application {
                 contentText.setFont(Font.font("System", FontWeight.NORMAL, 12));
                 alert.showAndWait();
             } else {
-                database.updateData(Integer.parseInt(updatePlayerIdField.getText()),firstNameField.getText(),lastNameField.getText(),addressField.getText(),postalCodeField.getText(),provinceField.getText(),phoneNumberField.getText(),gameTitleField.getText(),Date.valueOf(datePlayedField.getValue()),gameScoreField.getText());
+                int updatePlayerId = Integer.parseInt(updatePlayerIdField.getText());
+                String firstName = firstNameField.getText().equals("") ? null : firstNameField.getText();
+                String lastName = lastNameField.getText().equals("") ? null : lastNameField.getText();
+                String address = addressField.getText().equals("") ? null : addressField.getText();
+                String postalCode = postalCodeField.getText().equals("") ? null : postalCodeField.getText();
+                String province = provinceField.getText().equals("") ? null : provinceField.getText();
+                String phoneNumber = phoneNumberField.getText().equals("") ? null : phoneNumberField.getText();
+                String gameTitle = gameTitleField.getText().equals("") ? null : gameTitleField.getText();
+                int gameScore = gameScoreField.getText().equals("") ? -1 : Integer.parseInt(gameScoreField.getText());
+                Date date = datePlayedField.getValue() == null ? null : Date.valueOf(datePlayedField.getValue());
+                database.updateData(updatePlayerId,firstName,lastName,address,postalCode,province,phoneNumber,gameTitle,date,gameScore);
             }
         });
         grid.add(updatePlayerIdButton, 5, 0);

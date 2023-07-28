@@ -18,7 +18,6 @@ public class Database {
         }
     }
 
-
     public int getGameId(String gameTitle) {
         int gameId = 0;
         try {
@@ -43,38 +42,6 @@ public class Database {
         }
         return gameId;
     }
-
-    public int updatePlayerAndGame(int playerId, int gameId, Date playingDate, int score) {
-        int playerGameId = 0;
-        String selectSql = "SELECT player_game_id FROM PlayerAndGame WHERE player_id = ? AND game_id = ?";
-        String updateSql = "UPDATE PlayerAndGame SET playing_date = ?, score = ? WHERE player_game_id = ?";
-
-        try (PreparedStatement selectPstmt = conn.prepareStatement(selectSql)) {
-            selectPstmt.setInt(1, playerId);
-            selectPstmt.setInt(2, gameId);
-            try (ResultSet rs = selectPstmt.executeQuery()) {
-                if (rs.next()) {
-                    playerGameId = rs.getInt("player_game_id");
-                }
-            }
-        } catch (SQLException e) {
-            System.out.println(e.getMessage());
-        }
-
-        if (playerGameId > 0) {
-            try (PreparedStatement updater = conn.prepareStatement(updateSql)) {
-                updater.setDate(1, playingDate);
-                updater.setInt(2, score);
-                updater.setInt(3, playerGameId);
-                updater.executeUpdate();
-            } catch (SQLException e) {
-                System.out.println(e.getMessage());
-            }
-        }
-
-        return playerGameId;
-    }
-
 
     public int insertPlayer(String firstName, String lastName, String address, String postalCode, String province, String phoneNumber) {
         int playerId = 0;
@@ -105,14 +72,14 @@ public class Database {
         int playerGameId = 0;
         String sql = "INSERT INTO PlayerAndGame (player_id, game_id, playing_date, score) VALUES (?, ?, ?, ?)";
 
-        try (PreparedStatement pstmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-            pstmt.setInt(1, playerId);
-            pstmt.setInt(2, gameId);
-            pstmt.setDate(3, playingDate);
-            pstmt.setInt(4, score);
-            pstmt.executeUpdate();
+        try (PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            stmt.setInt(1, playerId);
+            stmt.setInt(2, gameId);
+            stmt.setDate(3, playingDate);
+            stmt.setInt(4, score);
+            stmt.executeUpdate();
 
-            ResultSet rs = pstmt.getGeneratedKeys();
+            ResultSet rs = stmt.getGeneratedKeys();
             if (rs.next()) {
                 playerGameId = rs.getInt(1);
             }
@@ -173,166 +140,115 @@ public class Database {
         return exists;
     }
 
-    public int getGameId(int playerId) {
-        int gameId = 0;
-        String sql = "SELECT game_id FROM PlayerAndGame WHERE player_id = ?";
-
-        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setInt(1, playerId);
-            try (ResultSet rs = stmt.executeQuery()) {
-                while (rs.next()) {
-                    gameId = rs.getInt("game_id");
+    public void updateData(int playerId, String firstName, String lastName, String address, String postalCode, String province, String phoneNumber, String gameTitle, Date playingDate, int score) {
+        try {
+            if(firstName!=null || lastName!=null ||address!=null || postalCode!=null || province != null || phoneNumber!=null){
+                StringBuilder queryBuilder = new StringBuilder("UPDATE Player SET ");
+                List<String> values = new ArrayList<>();
+                System.out.println(firstName);
+                System.out.println(lastName);
+                if (firstName != null) {
+                    queryBuilder.append("first_name = ?, ");
+                    values.add(firstName);
                 }
+                if (lastName != null) {
+                    queryBuilder.append("last_name = ?, ");
+                    values.add(lastName);
+                }
+                if (address != null) {
+                    queryBuilder.append("address = ?, ");
+                    values.add(address);
+                }
+                if (postalCode != null) {
+                    queryBuilder.append("postal_code = ?, ");
+                    values.add(postalCode);
+                }
+                if (province != null) {
+                    queryBuilder.append("province = ?, ");
+                    values.add(province);
+                }
+                if (phoneNumber != null) {
+                    queryBuilder.append("phone_number = ?, ");
+                    values.add(phoneNumber);
+                }
+
+// Remove the last comma and space
+                queryBuilder.setLength(queryBuilder.length() - 2);
+
+                queryBuilder.append(" WHERE player_id = ?");
+
+                PreparedStatement preparedStatement = conn.prepareStatement(queryBuilder.toString());
+                int i;
+                for (i = 0; i < values.size(); i++) {
+                    preparedStatement.setString(i + 1, values.get(i));
+                }
+                preparedStatement.setInt(i + 1, playerId);
+
+                preparedStatement.executeUpdate();
             }
+
+            int gameId = gameTitle!=null ? getGameId(gameTitle) : getGameId(playerId);
+            int playerGameId = getPlayerGameId(playerId);
+            if(playingDate != null) {
+                String query1 = "UPDATE PlayerAndGame SET player_id = ?, game_id = ?, playing_date = ? WHERE player_game_id = ?";
+                PreparedStatement preparedStatement1 = conn.prepareStatement(query1);
+
+                preparedStatement1.setInt(1, playerId);
+                preparedStatement1.setInt(2, gameId);
+                preparedStatement1.setDate(3, playingDate);
+                preparedStatement1.setInt(4, playerGameId);
+
+                preparedStatement1.executeUpdate();
+            }
+            if (score != -1) {
+                String query1 = "UPDATE PlayerAndGame SET player_id = ?, game_id = ?, score = ? WHERE player_game_id = ?";
+                PreparedStatement preparedStatement1 = conn.prepareStatement(query1);
+
+                preparedStatement1.setInt(1, playerId);
+                preparedStatement1.setInt(2, gameId);
+                preparedStatement1.setInt(3, score);
+                preparedStatement1.setInt(4, playerGameId);
+
+                preparedStatement1.executeUpdate();
+            } else {
+                String query1 = "UPDATE PlayerAndGame SET player_id = ?, game_id = ? WHERE player_game_id = ?";
+                PreparedStatement preparedStatement1 = conn.prepareStatement(query1);
+
+                preparedStatement1.setInt(1, playerId);
+                preparedStatement1.setInt(2, gameId);
+                preparedStatement1.setInt(3, playerGameId);
+                preparedStatement1.executeUpdate();
+
+            }
+
         } catch (SQLException e) {
-            System.out.println(e.getMessage());
+            throw new RuntimeException(e);
         }
 
-        return gameId;
     }
 
+    private int getPlayerGameId(int playerId) throws SQLException {
+        String query = "SELECT player_game_id FROM PlayerAndGame WHERE player_id = ?";
+        PreparedStatement preparedStatement = conn.prepareStatement(query);
 
-    public void updateData(int playerId, String firstName, String lastName, String address, String postalCode, String province, String phoneNumber, String gameTitle, Date playingDate, String score) {
-        StringBuilder sql = new StringBuilder("UPDATE players SET ");
-        List<Object> values = new ArrayList<>();
-        if (!firstName.isEmpty()) {
-            sql.append("first_name = ?, ");
-            values.add(firstName);
+        preparedStatement.setInt(1, playerId);
+
+        ResultSet resultSet = preparedStatement.executeQuery();
+        if (resultSet.next()) {
+            return resultSet.getInt("player_game_id");
         }
-        if (!lastName.isEmpty()) {
-            sql.append("last_name = ?, ");
-            values.add(lastName);
-        }
-        if (!address.isEmpty()) {
-            sql.append("address = ?, ");
-            values.add(address);
-        }
-        if (!province.isEmpty()) {
-            sql.append("province = ?, ");
-            values.add(province);
-        }
-        if (!postalCode.isEmpty()) {
-            sql.append("postal_code = ?, ");
-            values.add(postalCode);
-        }
-        if (!phoneNumber.isEmpty()) {
-            sql.append("phone_number = ?, ");
-            values.add(phoneNumber);
-        }
-        if (!values.isEmpty()) {
-            sql.setLength(sql.length() - 2); // Remove trailing comma and space
-            sql.append(" WHERE id = ?");
-            values.add(playerId);
-            try (PreparedStatement pstmt = conn.prepareStatement(sql.toString())) {
-                for (int i = 0; i < values.size(); i++) {
-                    pstmt.setObject(i + 1, values.get(i));
-                }
-                pstmt.executeUpdate();
-            } catch (SQLException e) {
-                throw new RuntimeException(e);
-            }
-        }
-        int gameId;
-        if(!gameTitle.isEmpty()) {
-            gameId = getGameId(gameTitle);
-            updatePlayerAndGame(playerId,gameId);
-        } else {
-            gameId = getGameId(playerId);
-        }
-        if(!score.isEmpty() && playingDate !=null) {
-            updatePlayerAndGame(playerId,gameId,playingDate,Integer.parseInt(score));
-        } else if(!score.isEmpty()) {
-            updatePlayerAndGame(playerId,gameId,Integer.parseInt(score));
-        } else if( playingDate !=null){
-            updatePlayerAndGame(playerId,gameId,playingDate);
-        }
+        return -1;
     }
 
-    private void updatePlayerAndGame(int playerId, int gameId) {
-        int playerGameId = 0;
-        String selectSql = "SELECT player_game_id FROM PlayerAndGame WHERE player_id = ?";
-        String updateSql = "UPDATE PlayerAndGame SET game_id = ? WHERE player_game_id = ?";
-
-        try (PreparedStatement selectPstmt = conn.prepareStatement(selectSql)) {
-            selectPstmt.setInt(1, playerId);
-            try (ResultSet rs = selectPstmt.executeQuery()) {
-                if (rs.next()) {
-                    playerGameId = rs.getInt("player_game_id");
-                }
-            }
-        } catch (SQLException e) {
-            System.out.println(e.getMessage());
+    private int getGameId(int playerId) throws SQLException {
+        String query = "SELECT game_id FROM PlayerAndGame WHERE player_id = ?";
+        PreparedStatement preparedStatement = conn.prepareStatement(query);
+        preparedStatement.setInt(1, playerId);
+        ResultSet resultSet = preparedStatement.executeQuery();
+        if (resultSet.next()) {
+            return resultSet.getInt("game_id");
         }
-
-        if (playerGameId > 0) {
-            try (PreparedStatement updater = conn.prepareStatement(updateSql)) {
-                updater.setInt(1, gameId);
-                updater.setInt(2, playerGameId);
-                updater.executeUpdate();
-            } catch (SQLException e) {
-                System.out.println(e.getMessage());
-            }
-        }
-    }
-
-    public int updatePlayerAndGame(int playerId, int gameId, int score) {
-        int playerGameId = 0;
-        String selectSql = "SELECT player_game_id FROM PlayerAndGame WHERE player_id = ? AND game_id = ?";
-        String updateSql = "UPDATE PlayerAndGame SET score = ? WHERE player_game_id = ?";
-
-        try (PreparedStatement selectPstmt = conn.prepareStatement(selectSql)) {
-            selectPstmt.setInt(1, playerId);
-            selectPstmt.setInt(2, gameId);
-            try (ResultSet rs = selectPstmt.executeQuery()) {
-                if (rs.next()) {
-                    playerGameId = rs.getInt("player_game_id");
-                }
-            }
-        } catch (SQLException e) {
-            System.out.println(e.getMessage());
-        }
-
-        if (playerGameId > 0) {
-            try (PreparedStatement updater = conn.prepareStatement(updateSql)) {
-                updater.setInt(1, score);
-                updater.setInt(2, playerGameId);
-                updater.executeUpdate();
-            } catch (SQLException e) {
-                System.out.println(e.getMessage());
-            }
-        }
-
-        return playerGameId;
-    }
-
-    public int updatePlayerAndGame(int playerId, int gameId, Date playingDate) {
-        int playerGameId = 0;
-        String selectSql = "SELECT player_game_id FROM PlayerAndGame WHERE player_id = ? AND game_id = ?";
-        String updateSql = "UPDATE PlayerAndGame SET playing_date = ? WHERE player_game_id = ?";
-
-        try (PreparedStatement selectPstmt = conn.prepareStatement(selectSql)) {
-            selectPstmt.setInt(1, playerId);
-            selectPstmt.setInt(2, gameId);
-            try (ResultSet rs = selectPstmt.executeQuery()) {
-                if (rs.next()) {
-                    playerGameId = rs.getInt("player_game_id");
-                }
-            }
-        } catch (SQLException e) {
-            System.out.println(e.getMessage());
-        }
-
-        if (playerGameId > 0) {
-            try (PreparedStatement updater = conn.prepareStatement(updateSql)) {
-                updater.setDate(1, playingDate);
-                updater.setInt(2, playerGameId);
-                updater.executeUpdate();
-            } catch (SQLException e) {
-                System.out.println(e.getMessage());
-            }
-        }
-
-        return playerGameId;
+        return -1;
     }
 
 }
