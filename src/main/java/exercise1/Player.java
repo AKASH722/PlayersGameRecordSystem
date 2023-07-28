@@ -1,4 +1,4 @@
-package com.playersgamerecordsystem;
+package exercise1;
 
 import java.time.LocalDate;
 

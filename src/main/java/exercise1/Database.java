@@ -1,4 +1,4 @@
-package com.playersgamerecordsystem;
+package exercise1;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;

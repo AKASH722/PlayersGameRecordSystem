@@ -4,6 +4,6 @@ module com.playersgamerecordsystem {
     requires java.sql;
 
 
-    opens com.playersgamerecordsystem to javafx.fxml;
-    exports com.playersgamerecordsystem;
+    opens exercise1 to javafx.fxml;
+    exports exercise1;
 }
