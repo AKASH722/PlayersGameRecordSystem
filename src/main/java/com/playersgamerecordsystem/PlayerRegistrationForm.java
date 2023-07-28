@@ -125,6 +125,16 @@ public class PlayerRegistrationForm extends Application {
                         contentText.setFont(Font.font("System", FontWeight.NORMAL, 12));
                         alert.showAndWait();
                     }
+                    firstNameField.setText("");
+                    lastNameField.setText("");
+                    addressField.setText("");
+                    postalCodeField.setText("");
+                    provinceField.setText("");
+                    phoneNumberField.setText("");
+                    gameTitleField.setText("");
+                    gameScoreField.setText("");
+                    updatePlayerIdField.setText("");
+                    datePlayedField.setValue(null);
                 }
             }
         });
@@ -160,6 +170,23 @@ public class PlayerRegistrationForm extends Application {
                 int gameScore = gameScoreField.getText().equals("") ? -1 : Integer.parseInt(gameScoreField.getText());
                 Date date = datePlayedField.getValue() == null ? null : Date.valueOf(datePlayedField.getValue());
                 database.updateData(updatePlayerId,firstName,lastName,address,postalCode,province,phoneNumber,gameTitle,date,gameScore);
+                Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                alert.setTitle("Updated");
+                alert.setHeaderText(null);
+                alert.setContentText("Player and Game details Updated");
+                Label contentText = (Label) alert.getDialogPane().lookup(".content.label");
+                contentText.setFont(Font.font("System", FontWeight.NORMAL, 12));
+                alert.showAndWait();
+                firstNameField.setText("");
+                lastNameField.setText("");
+                addressField.setText("");
+                postalCodeField.setText("");
+                provinceField.setText("");
+                phoneNumberField.setText("");
+                gameTitleField.setText("");
+                gameScoreField.setText("");
+                updatePlayerIdField.setText("");
+                datePlayedField.setValue(null);
             }
         });
         grid.add(updatePlayerIdButton, 5, 0);
