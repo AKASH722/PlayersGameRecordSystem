@@ -12,7 +12,8 @@ public class Database {
 
     Database() {
         try {
-            conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/Player_Game_Record_System", "root", "root");
+            conn = DriverManager.getConnection("jdbc:oracle:thin:@localhost:1521:your_oracle_service", "your_username", "your_password");
+//            conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/Player_Game_Record_System", "root", "root");
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
@@ -28,7 +29,8 @@ public class Database {
             if (rs.next()) {
                 gameId = rs.getInt("game_id");
             } else {
-                String insertSql = "INSERT INTO Game (game_title) VALUES (?)";
+//                String insertSql = "INSERT INTO Game (game_title) VALUES (?)";
+                String insertSql = "INSERT INTO Game (game_id, game_title) VALUES (game_seq.NEXTVAL, ?)";
                 PreparedStatement preparedStatement2 = conn.prepareStatement(insertSql, Statement.RETURN_GENERATED_KEYS);
                 preparedStatement2.setString(1, gameTitle);
                 preparedStatement2.executeUpdate();
@@ -45,7 +47,8 @@ public class Database {
 
     public int insertPlayer(String firstName, String lastName, String address, String postalCode, String province, String phoneNumber) {
         int playerId = 0;
-        String sql = "INSERT INTO Player (first_name, last_name, address, postal_code, province, phone_number) VALUES (?, ?, ?, ?, ?, ?)";
+//        String sql = "INSERT INTO Player (first_name, last_name, address, postal_code, province, phone_number) VALUES (?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO Player (player_id, first_name, last_name, address, postal_code, province, phone_number) VALUES (player_seq.NEXTVAL, ?, ?, ?, ?, ?, ?)";
 
         try (PreparedStatement preparedStatement = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             preparedStatement.setString(1, firstName);
@@ -70,7 +73,8 @@ public class Database {
 
     public int insertPlayerAndGame(int playerId, int gameId, Date playingDate, int score) {
         int playerGameId = 0;
-        String sql = "INSERT INTO PlayerAndGame (player_id, game_id, playing_date, score) VALUES (?, ?, ?, ?)";
+//        String sql = "INSERT INTO PlayerAndGame (player_id, game_id, playing_date, score) VALUES (?, ?, ?, ?)";
+        String sql = "INSERT INTO PlayerAndGame (player_game_id, player_id, game_id, playing_date, score) VALUES (player_game_seq.NEXTVAL, ?, ?, ?, ?)";
 
         try (PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             stmt.setInt(1, playerId);
@@ -172,7 +176,7 @@ public class Database {
                     values.add(phoneNumber);
                 }
 
-// Remove the last comma and space
+                // Remove the last comma and space
                 queryBuilder.setLength(queryBuilder.length() - 2);
 
                 queryBuilder.append(" WHERE player_id = ?");
